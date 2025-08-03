@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  StackSet Spoke - Envia eventos de AuthorizeSecurityGroupIngress para Event Bus da conta Hub.
+
+Parameters:
+  HubAccount:
+    Description: 'Account Id for the hub account, eg. 123456789012'
+    Type: String
+    AllowedPattern: '^\d{12}$'
+
+Mappings:
+  EventBridge:
+    Bus:
+      Name: security-events
+
+Conditions:
+  IsSpokeAccountEqualToHubAccount: !Not [ !Equals [ !Ref HubAccount , !Ref "AWS::AccountId" ] ]
+
+Resources:
+
+  SGIngressEventRule:
+    Condition: IsSpokeAccountEqualToHubAccount
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Description: 'Encaminha eventos AuthorizeSecurityGroupIngress para o Event Bus da conta Hub'
+      EventPattern:
+        source:
+          - aws.ec2
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventName:
+            - AuthorizeSecurityGroupIngress
+      Name: SGIngressActivityRule
+      State: ENABLED
+      Targets:
+        - Arn: !Sub
+            - arn:aws:events:${AWS::Region}:${HubAccount}:event-bus/${EventBusName}
+            - EventBusName: !FindInMap [ EventBridge, Bus, Name ]
+          Id: ForwardSGIngressEvent
+          RoleArn: !GetAtt EventDeliveryRole.Arn
+
+  EventDeliveryRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: AllowPutEventsToHub
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - events:PutEvents
+                Resource: !Sub
+                  - arn:aws:events:${AWS::Region}:${HubAccount}:event-bus/${EventBusName}
+                  - EventBusName: !FindInMap [ EventBridge, Bus, Name ]
