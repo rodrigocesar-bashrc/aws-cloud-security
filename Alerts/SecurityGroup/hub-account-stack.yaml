@@ -1,0 +1,130 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Automacao para alertas de SGs com portas sensiveis abertas para a Internet
+
+Parameters:
+  SlackWebhookParamName:
+    Type: String
+  OrganizationId:
+    Type: String
+  EmailAlertAddress:
+    Type: String
+    Description: Endereço de e-mail para receber alertas do SNS
+  ArtifactsBucketName:
+    Type: String
+    Description: Nome do bucket S3 existente com o código da Lambda
+
+Resources:
+  SGAlertsSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: SGSecurityAlertsTopic
+
+  SGAlertsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref SGAlertsSNSTopic
+      Protocol: email
+      Endpoint: !Ref EmailAlertAddress
+
+  SGOpenToWorldLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SGOpenToWorldLambdaRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref SGAlertsSNSTopic
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SlackWebhookParamName}
+              - Effect: Allow
+                Action: organizations:DescribeAccount
+                Resource: "*"
+
+  SGOpenToWorldLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: SGOpenToWorldAlertHandler
+      Handler: handler.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt SGOpenToWorldLambdaRole.Arn
+      Timeout: 10
+      Code:
+        S3Bucket: !Ref ArtifactsBucketName
+        S3Key: lambda.zip
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref SGAlertsSNSTopic
+          SLACK_WEBHOOK_PARAM_NAME: !Ref SlackWebhookParamName
+
+  SGOpenToWorldLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: SGOpenToWorldAlertHandler
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: arn:aws:events:us-east-1:857022554461:rule/SGOpenToWorldRule
+
+  SecurityEventsBus:
+    Type: AWS::Events::EventBus
+    Properties:
+      Name: security-events
+
+  AllowOrgToPutEvents:
+    Type: AWS::Events::EventBusPolicy
+    Properties:
+      Action: events:PutEvents
+      Principal: "*"
+      StatementId: AllowOrgToPutEvents
+      EventBusName: !Ref SecurityEventsBus
+      Condition:
+        Type: StringEquals
+        Key: aws:PrincipalOrgID
+        Value: !Ref OrganizationId
+
+  SGOpenToWorldEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: SGOpenToWorldRule
+      Description: Detecta abertura de portas sensíveis para o mundo
+      EventBusName: default   #!Ref SecurityEventsBus
+      EventPattern:
+        source:
+          - aws.ec2
+        detail-type:
+          - AWS API Call via CloudTrail
+        detail:
+          eventSource:
+            - ec2.amazonaws.com
+            - ec2-instance-connect.amazonaws.com          
+          eventName:
+            - AuthorizeSecurityGroupIngress
+      State: ENABLED
+      Targets:
+        - Id: SGOpenToWorldLambdaTarget
+          Arn: !GetAtt SGOpenToWorldLambdaFunction.Arn
+
+Outputs:
+  LambdaFunctionName:
+    Value: !Ref SGOpenToWorldLambdaFunction
+  SNSTopicArn:
+    Value: !Ref SGAlertsSNSTopic
+  EventBusArn:
+    Value: !GetAtt SecurityEventsBus.Arn
