@@ -60,14 +60,11 @@ Essa stack cria os recursos necessários para enviar eventos em tempo real para 
 
 ## 📬 Redundância de Notificações
 
-Além do Slack, a solução também conta com **redundância via e-mail** (SNS subscription), garantindo a entrega dos alertas mesmo que o Slack esteja indisponível.
+Além do Slack, a solução também conta com **redundância via e-mail** (SNS subscription), garantindo a entrega dos alertas mesmo que o Slack esteja indisponível ou algo do tipo.
 
 ---
 
-## 📁 Estrutura do Repositório
+## 🔔 Exemplo de Alerta Recebido
 
-```bash
-├── template.yaml           # Template CloudFormation completo
-├── lambda.zip              # Código compactado da função Lambda
-└── src/
-    └── handler.py          # Código-fonte da função Lambda
+<img width="1200" height="686" alt="image" src="https://github.com/user-attachments/assets/38f826a7-5d82-48ea-b30a-8e6f16002c67" />
+
