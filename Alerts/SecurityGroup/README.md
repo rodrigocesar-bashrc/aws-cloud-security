@@ -64,6 +64,44 @@ Além do Slack, a solução também conta com **redundância via e-mail** (SNS s
 
 ---
 
+🧪 Payload de Teste
+Para validar se a solução está funcionando corretamente após o deploy, até para questões de debug/tshoot, você pode simular um evento de modificação em um Security Group com o seguinte payload na Lambda:
+### 🧪 Payload de Teste
+
+```json
+{
+  "version": "0",
+  "id": "c80cc918-7d6e-41d3-b4dd-example",
+  "detail-type": "AWS API Call via CloudTrail",
+  "source": "aws.ec2",
+  "account": "123456789012",
+  "time": "2025-08-03T18:25:43Z",
+  "region": "us-east-1",
+  "resources": [],
+  "detail": {
+    "eventSource": "ec2.amazonaws.com",
+    "eventName": "AuthorizeSecurityGroupIngress",
+    "requestParameters": {
+      "groupId": "sg-0123456789abcdef0",
+      "ipPermissions": [
+        {
+          "ipProtocol": "tcp",
+          "fromPort": 22,
+          "toPort": 22,
+          "ipRanges": [
+            {
+              "cidrIp": "0.0.0.0/0"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+---
+
 ## 🔔 Exemplo de Alerta Recebido
 
 <img width="1339" height="792" alt="image" src="https://github.com/user-attachments/assets/a187e427-8280-4d0c-bb59-caaf2779c6ed" />
