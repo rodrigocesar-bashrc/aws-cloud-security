@@ -1,0 +1,200 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  Auto-mitigates unauthorized ingress rule changes in any Security Group
+  and sends notifications via Slack webhook for sensitive or overly permissive traffic.
+
+Parameters:
+  SlackWebhookUrl:
+    Description: URL do Webhook do Slack para receber notificações.
+    Type: String
+    NoEcho: true
+
+Resources:
+
+  SecurityGroupChangeAutoResponseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: SecurityGroupAutoRevert
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: AllowRevokeIngress
+                Effect: Allow
+                Action:
+                  - ec2:RevokeSecurityGroupIngress
+                Resource: '*'
+
+  SecurityGroupChangeAutoResponse:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Reverte regras perigosas em SGs e alerta no Slack
+      Handler: index.lambda_handler
+      MemorySize: 1024
+      Role: !GetAtt SecurityGroupChangeAutoResponseRole.Arn
+      Runtime: python3.13
+      Timeout: 60
+      Environment:
+        Variables:
+          slack_webhook_url: !Ref SlackWebhookUrl
+      Code:
+        ZipFile: |
+          import os, json, boto3
+          import urllib.request
+
+          SENSITIVE_PORTS = [
+              22,     # SSH
+              3389,   # RDP
+              3306,   # MySQL
+              5432,   # PostgreSQL
+              1433,   # Microsoft SQL Server
+              5439,   # Amazon Redshift
+              6379    # Redis
+          ]
+
+          def lambda_handler(event, context):
+              print(json.dumps(event))
+
+              if 'detail' not in event or 'eventName' not in event['detail']:
+                  return {"Result": "Failure", "Message": "Evento inválido"}
+
+              event_name = event['detail']['eventName']
+              request_params = event['detail'].get('requestParameters', {})
+              group_id = request_params.get('groupId')
+
+              if event_name == 'AuthorizeSecurityGroupIngress' and group_id:
+                  ip_permissions_raw = request_params.get('ipPermissions', {}).get('items', [])
+                  ip_permissions = normalize_paramter_names(ip_permissions_raw)
+
+                  def is_open_to_internet(perm):
+                      return (
+                          any(ipr.get('CidrIp') == '0.0.0.0/0' for ipr in perm.get('IpRanges', [])) or
+                          any(ipv6.get('CidrIpv6') == '::/0' for ipv6 in perm.get('Ipv6Ranges', []))
+                      )
+
+                  def classify_permission(perm):
+                      if perm.get('IpProtocol') == '-1':
+                          return 'All Traffic'
+                      if perm.get('IpProtocol') == 'tcp' and perm.get('FromPort') == 0 and perm.get('ToPort') == 65535:
+                          return 'All TCP'
+                      if perm.get('FromPort') in SENSITIVE_PORTS or perm.get('ToPort') in SENSITIVE_PORTS:
+                          return 'Sensitive Port'
+                      return 'Unknown'
+
+                  dangerous_perms = []
+
+                  for perm in ip_permissions:
+                      if not is_open_to_internet(perm):
+                          continue
+                      rule_type = classify_permission(perm)
+                      if rule_type != 'Unknown':
+                          perm_copy = perm.copy()
+                          perm_copy['Tipo'] = rule_type
+                          dangerous_perms.append(perm_copy)
+
+                  if not dangerous_perms:
+                      return {"Result": "Ignored", "Message": "Nenhuma regra crítica encontrada"}
+
+                  # Remove o campo 'Tipo' antes de enviar à API
+                  ip_permissions_cleaned = [
+                      {k: v for k, v in p.items() if k != 'Tipo'}
+                      for p in dangerous_perms
+                  ]
+
+                  boto3.client('ec2').revoke_security_group_ingress(
+                      GroupId=group_id,
+                      IpPermissions=ip_permissions_cleaned
+                  )
+
+                  account_id = event.get('account', 'Desconhecido')
+                  user = event['detail']['userIdentity']['arn']
+                  region = event.get('region', 'Desconhecida')
+                  tipos_detectados = sorted(set(p['Tipo'] for p in dangerous_perms))
+                  tipos_formatado = ', '.join(tipos_detectados)
+
+                  message = (
+                      f":rotating_light: *AUTO-REMEDIATED*: Regra(s) perigosa(s) removida(s) do SG `{group_id}`!\n"
+                      f"*Conta AWS:* `{account_id}`\n"
+                      f"*Região:* `{region}`\n"
+                      f"*Usuário:* {user}\n\n"
+                      f"*Tipo de regra detectada:* {tipos_formatado}\n\n"
+                      f"*Porta(s) removida(s):* ```{json.dumps(ip_permissions_cleaned, indent=2)}```"
+                  )
+
+                  send_slack_alert(message)
+                  return {"Result": "Success", "Message": message}
+              else:
+                  return {"Result": "Ignored", "Message": f"Evento {event_name} não tratado"}
+
+          def normalize_paramter_names(ip_items):
+              new_ip_items = []
+
+              for ip_item in ip_items:
+                  if 'ipProtocol' not in ip_item:
+                      print(f"[WARN] Ignorando item sem ipProtocol: {ip_item}")
+                      continue
+
+                  new_ip_item = {
+                      "IpProtocol": ip_item['ipProtocol']
+                  }
+
+                  if 'fromPort' in ip_item:
+                      new_ip_item['FromPort'] = ip_item['fromPort']
+                  if 'toPort' in ip_item:
+                      new_ip_item['ToPort'] = ip_item['toPort']
+
+                  if 'ipv6Ranges' in ip_item and ip_item['ipv6Ranges']:
+                      range_list = ip_item['ipv6Ranges']['items']
+                      new_ip_item['Ipv6Ranges'] = [{"CidrIpv6": item['cidrIpv6']} for item in range_list]
+                  elif 'ipRanges' in ip_item and ip_item['ipRanges']:
+                      range_list = ip_item['ipRanges']['items']
+                      new_ip_item['IpRanges'] = [{"CidrIp": item['cidrIp']} for item in range_list]
+
+                  new_ip_items.append(new_ip_item)
+
+              return new_ip_items
+
+          def send_slack_alert(message):
+              webhook_url = os.environ['slack_webhook_url']
+              data = json.dumps({"text": message}).encode("utf-8")
+              req = urllib.request.Request(
+                  webhook_url,
+                  data=data,
+                  headers={"Content-Type": "application/json"}
+              )
+              try:
+                  with urllib.request.urlopen(req) as response:
+                      response.read()
+              except Exception as e:
+                  print(f"Erro ao enviar alerta para o Slack: {e}")
+
+  SecurityGroupChangeAutoResponseLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      FunctionName: !Ref SecurityGroupChangeAutoResponse
+
+  TriggeredRuleForSecurityGroupChangeAutoResponse:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Dispara a função Lambda em alterações de SG
+      EventPattern:
+        detail:
+          eventSource:
+            - ec2.amazonaws.com
+          eventName:
+            - AuthorizeSecurityGroupIngress
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt SecurityGroupChangeAutoResponse.Arn
+          Id: SecurityGroupChangeTarget
