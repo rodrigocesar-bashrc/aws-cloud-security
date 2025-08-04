@@ -64,9 +64,8 @@ Além do Slack, a solução também conta com **redundância via e-mail** (SNS s
 
 ---
 
-🧪 Payload de Teste
-Para validar se a solução está funcionando corretamente após o deploy, até para questões de debug/tshoot, você pode simular um evento de modificação em um Security Group com o seguinte payload na Lambda:
 ### 🧪 Payload de Teste
+Para validar se a solução está funcionando corretamente após o deploy, até para questões de debug/tshoot, você pode simular um evento de modificação em um Security Group com o seguinte payload na Lambda:
 
 ```json
 {
