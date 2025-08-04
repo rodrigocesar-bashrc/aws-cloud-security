@@ -66,5 +66,6 @@ Além do Slack, a solução também conta com **redundância via e-mail** (SNS s
 
 ## 🔔 Exemplo de Alerta Recebido
 
+<img width="1339" height="792" alt="image" src="https://github.com/user-attachments/assets/a187e427-8280-4d0c-bb59-caaf2779c6ed" />
 
 
