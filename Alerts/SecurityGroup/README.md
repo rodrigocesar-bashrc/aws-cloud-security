@@ -110,5 +110,5 @@ Para validar se a solução está funcionando corretamente após o deploy, até 
 📚 Documentação completa
 Para uma explicação detalhada da motivação, estrutura e aplicação da política, leia:
 
-👉 **[Série AWS SCP #01 – Restringindo alterações em Security Groups](https://medium.com/@rodrigocesar.bashrc/s%C3%A9rie-aws-scp-01-restringindo-altera%C3%A7%C3%B5es-em-security-groups-pt-2-42098f3e3a5f)**  
+👉 **[Série AWS SCP #01 – Restringindo alterações em Security Groups - Parte 2](https://medium.com/@rodrigocesar.bashrc/s%C3%A9rie-aws-scp-01-restringindo-altera%C3%A7%C3%B5es-em-security-groups-pt-2-42098f3e3a5f)**  
 ✍️ Autor: Rodrigo Cesar
