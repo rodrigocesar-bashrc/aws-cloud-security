@@ -32,7 +32,7 @@ Essas exceções são definidas através da cláusula `Condition` no bloco de `D
 
 Para uma explicação detalhada da motivação, estrutura e aplicação da política, leia:
 
-👉 **[Série AWS SCP #01 – Restringindo alterações em Security Groups](https://medium.com/@rodrigocesar.bashrc/s%C3%A9rie-aws-scp-01-restringindo-altera%C3%A7%C3%B5es-em-security-groups-9b061e4cb7d4)**  
+👉 **[Série AWS SCP #01 – Restringindo alterações em Security Groups - Parte 1](https://medium.com/@rodrigocesar.bashrc/s%C3%A9rie-aws-scp-01-restringindo-altera%C3%A7%C3%B5es-em-security-groups-9b061e4cb7d4)**  
 ✍️ Autor: Rodrigo Cesar
 
 ---
