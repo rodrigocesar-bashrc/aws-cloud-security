@@ -87,4 +87,4 @@ Criação de uma função **AWS Lambda** que:
 ## :bookmark: Referências
 
 - [Using AWS Lambda to Revert Unauthorized Security Group Changes](https://dev.to/aws-builders/using-aws-lambda-to-revert-unauthorized-security-group-changes-5hke)
-- Documentacão completa: [Série AWS SCP #01 – Restringindo alterações em Security Groups - Parte 3](https://medium.com/@rodrigocesar.bashrc/s%C3%A9rie-aws-scp-01-restringindo-altera%C3%A7%C3%B5es-em-security-groups-pt-3-495c32d396f1)
+- [Documentacão completa: Série AWS SCP #01 – Restringindo alterações em Security Groups - Parte 3](https://medium.com/@rodrigocesar.bashrc/s%C3%A9rie-aws-scp-01-restringindo-altera%C3%A7%C3%B5es-em-security-groups-pt-3-495c32d396f1)
