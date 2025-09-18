@@ -9,6 +9,7 @@ Essa SCP tem como objetivo **impedir alterações críticas no AWS CloudTrail**,
 - Exclusão de trilhas (`cloudtrail:DeleteTrail`)
 - Atualização de trilhas (`cloudtrail:UpdateTrail`)
 - Alteração do escopo de eventos registrados (`cloudtrail:PutEventSelectors`)
+- Consulta de eventos (`cloudtrail:LookupEvents`)
 
 ### 🛡️ Finalidade
 
