@@ -1,0 +1,26 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "denycloudtrail",
+            "Effect": "Deny",
+            "Action": [
+                "cloudtrail:CreateTrail",
+                "cloudtrail:DeleteTrail",
+                "cloudtrail:UpdateTrail",
+                "cloudtrail:StopLogging",
+                "cloudtrail:PutEventSelectors",
+                "cloudtrail:LookupEvents"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "ArnNotLike": {
+                    "aws:PrincipalArn": [
+                        "arn:aws:iam::123456789012:role/aws-reserved/sso.amazonaws.com/sa-east-1/xxx",
+                        "arn:aws:iam::123456789012:user/xxx"
+                    ]
+                }
+            }
+        }
+    ]
+}
