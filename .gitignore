@@ -1,0 +1,33 @@
+# Ignora arquivos de configuração do CDK
+cdk.out
+.cdk.staging
+
+# Ignora arquivos de dependências Python
+requirements*.txt
+
+# Ignora script do Windows
+source.bat
+
+# Ignora arquivos __init__.py em qualquer pasta
+__init__.py
+
+# Ignora cache de bytecode Python
+__pycache__
+*.pyc
+.pytest_cache
+
+# Ignora a pasta de testes
+tests/
+
+# Ignora arquivos de backup
+*.bkp
+
+# Ignora arquivos de configuração
+package-lock.json
+.venv
+.env
+*.egg-info
+*.local.md
+
+# Ignora arquivos swap
+*.swp
