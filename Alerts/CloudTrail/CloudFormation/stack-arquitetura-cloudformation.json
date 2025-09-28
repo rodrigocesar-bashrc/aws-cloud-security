@@ -1,0 +1,193 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "CloudTrail Alerts Stack - CloudFormation",
+    "Resources": {
+        "CloudTrailLambdaCodeBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+                "Bucket": "alerts-cloudtrail-code-bashrc",      # alterar para o nome do seu bucket
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "lambda.amazonaws.com"
+                            },
+                            "Action": [
+                                "s3:GetObject",
+                                "s3:ListBucket"
+                            ],
+                            "Resource": [
+                                "arn:aws:s3:::alerts-cloudtrail-code-bashrc",
+                                "arn:aws:s3:::alerts-cloudtrail-code-bashrc/*"
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "CloudTrailEnabledManagedRule": {
+            "Type": "AWS::Config::ConfigRule",
+            "Properties": {
+                "ConfigRuleName": "CloudTrailEnabled",
+                "MaximumExecutionFrequency": "TwentyFour_Hours",
+                "Source": {
+                    "Owner": "AWS",
+                    "SourceIdentifier": "CLOUD_TRAIL_ENABLED"
+                }
+            }
+        },
+        "CloudTrailAlertsServiceRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "lambda.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+                ]
+            }
+        },
+        "CloudTrailAlertsServiceRoleDefaultPolicy": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "CloudTrailAlertsServiceRoleDefaultPolicy",
+                "Roles": [
+                    {
+                        "Ref": "CloudTrailAlertsServiceRole"
+                    }
+                ],
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "ssm:GetParameter",
+                                "ssm:GetParameterHistory",
+                                "ssm:GetParameters"
+                            ],
+                            "Resource": "arn:aws:ssm:us-east-1:123456789012:parameter/alertas/slack/webhook/alerts-aws-evasao-defesas"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": "sns:Publish",
+                            "Resource": "arn:aws:sns:us-east-1:123456789012:CloudSec" # alterar para o ARN do seu tópico
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": "organizations:DescribeAccount",
+                            "Condition": {
+                                "StringEquals": {
+                                    "aws:PrincipalOrgID": [
+                                        "o-1123ug1g24"  # alterar para seu org id
+                                    ]
+                                }
+                            },
+                            "Resource": "*"
+                        }
+                    ]
+                }
+            }
+        },
+        "CloudTrailAlertsFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Code": {
+                    "S3Bucket": "alerts-cloudtrail-code-bashrc",
+                    "S3Key": "alerts-cloudtrail-lambda.zip"
+                },
+                "Handler": "alerts-cloudtrail-lambda.lambda_handler",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "CloudTrailAlertsServiceRole",
+                        "Arn"
+                    ]
+                },
+                "Runtime": "python3.12",
+                "Timeout": 20,
+                "Environment": {
+                    "Variables": {
+                        "SLACK_WEBHOOK_PARAM_NAME": "/alertas/slack/webhook/alerts-aws-evasao-defesas",
+                        "SNS_TOPIC_ARN": "arn:aws:sns:us-east-1:123456789012:CloudSec"
+                    }
+                }
+            },
+            "DependsOn": [
+                "CloudTrailAlertsServiceRoleDefaultPolicy",
+                "CloudTrailAlertsServiceRole"
+            ]
+        },
+        "CloudTrailRule": {
+            "Type": "AWS::Events::Rule",
+            "Properties": {
+                "Description": "Alert when CloudTrail logging is stopped/updated/deleted for the org trail.",
+                "EventPattern": {
+                    "detail": {
+                        "eventSource": [
+                            "cloudtrail.amazonaws.com"
+                        ],
+                        "eventName": [
+                            "StopLogging",
+                            "DeleteTrail",
+                            "UpdateTrail"
+                        ]
+                    },
+                    "detail-type": [
+                        "AWS API Call via CloudTrail"
+                    ],
+                    "source": [
+                        "aws.cloudtrail"
+                    ]
+                },
+                "State": "ENABLED",
+                "Targets": [
+                    {
+                        "Arn": {
+                            "Fn::GetAtt": [
+                                "CloudTrailAlertsFunction",
+                                "Arn"
+                            ]
+                        },
+                        "Id": "Target0",
+                        "InputTransformer": {
+                            "InputPathsMap": {
+                                "detail": "$.detail"
+                            },
+                            "InputTemplate": "{\"detail\":<detail>}"
+                        }
+                    }
+                ]
+            }
+        },
+        "CloudTrailRuleAllowEventRule": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+                "Action": "lambda:InvokeFunction",
+                "FunctionName": {
+                    "Fn::GetAtt": [
+                        "CloudTrailAlertsFunction",
+                        "Arn"
+                    ]
+                },
+                "Principal": "events.amazonaws.com",
+                "SourceArn": {
+                    "Fn::GetAtt": [
+                        "CloudTrailRule",
+                        "Arn"
+                    ]
+                }
+            }
+        }
+    }
+}
