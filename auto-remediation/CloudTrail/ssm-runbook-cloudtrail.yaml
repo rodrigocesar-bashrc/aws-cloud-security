@@ -1,0 +1,62 @@
+schemaVersion: "0.3"
+description: Auto-remediate CloudTrail logging when a specific trail is stopped
+assumeRole: "{{ AutomationAssumeRole }}"
+parameters:
+  TrailName:
+    type: String
+    description: (Required) CloudTrail trail name or ARN
+  AutomationAssumeRole:
+    type: String
+    description: (Optional) The ARN of the role that allows Automation to perform actions
+    default: ""
+mainSteps:
+  - name: GetCloudTrailStatus
+    action: aws:assertAwsResourceProperty
+    nextStep: End
+    isCritical: false
+    isEnd: false
+    onFailure: step:AscertainStopped
+    inputs:
+      Service: cloudtrail
+      Api: GetTrailStatus
+      Name: "{{ TrailName }}"
+      PropertySelector: $.IsLogging
+      DesiredValues:
+        - "True"
+  - name: AscertainStopped
+    action: aws:assertAwsResourceProperty
+    nextStep: EnableLogging
+    isCritical: false
+    isEnd: false
+    onFailure: step:End
+    inputs:
+      Service: cloudtrail
+      Api: GetTrailStatus
+      Name: "{{ TrailName }}"
+      PropertySelector: $.IsLogging
+      DesiredValues:
+        - "False"
+  - name: EnableLogging
+    action: aws:executeAwsApi
+    nextStep: WaitTurnedOn
+    isEnd: false
+    inputs:
+      Service: cloudtrail
+      Api: StartLogging
+      Name: "{{ TrailName }}"
+  - name: WaitTurnedOn
+    action: aws:waitForAwsResourceProperty
+    timeoutSeconds: 300
+    isEnd: true
+    inputs:
+      Service: cloudtrail
+      Api: GetTrailStatus
+      Name: "{{ TrailName }}"
+      PropertySelector: $.IsLogging
+      DesiredValues:
+        - "True"
+  - name: End
+    action: aws:sleep
+    isEnd: true
+    inputs:
+      Duration: PT1S
