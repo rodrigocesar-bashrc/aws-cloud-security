@@ -19,7 +19,7 @@ Criação de uma automação baseada em **EventBridge Rule** e **AWS Systems Man
 
 1. **EventBridge Rule:** uma regra do EventBridge detecta o evento CloudTrail `StopLogging` e aciona a automação;
 2. **SSM Automation Document:** aciona um documento de automação (SSM Automation) Runbook que verifica o status do trail e reinicia o logging automaticamente;
-3. **IAM Role:** utiliza uma IAM Role dedicada para garantir permissões mínimas e seguras;
+3. **IAM Role:** utiliza uma IAM Role dedicada para garantir permissões mínimas e seguras para executar a a ação de remediação.
 
 ---
 
