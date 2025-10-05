@@ -15,7 +15,7 @@ O CloudTrail é responsável por registrar todas as ações realizadas nas conta
 
 ## ⚙️ Arquitetura
 
-Criação de uma automação baseada em **EventBridge Rule** e **AWS Systems Manager Automation**:
+A estrutura adotada é 100% serverless e composta por:
 
 1. **EventBridge Rule:** uma regra do EventBridge detecta o evento CloudTrail `StopLogging` e aciona a automação;
 2. **SSM Automation/Documents:** aciona um documento de automação (SSM Automation) Runbook que verifica o status do trail e reinicia o logging automaticamente;
