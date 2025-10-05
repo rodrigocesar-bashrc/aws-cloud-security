@@ -21,6 +21,8 @@ A estrutura adotada é 100% serverless e composta por:
 2. **SSM Automation/Documents:** aciona um documento de automação (SSM Automation) Runbook que verifica o status do trail e reinicia o logging automaticamente;
 3. **IAM Role:** utiliza uma IAM Role dedicada para garantir permissões mínimas e seguras para executar a a ação de remediação.
 
+<img width="1232" height="618" alt="image" src="https://github.com/user-attachments/assets/f04e93d9-24e4-42ef-8f16-f220c01442dd" />
+
 ---
 
 ## :rocket: Como usar
