@@ -38,7 +38,7 @@ Antes do deploy, siga os passos abaixo:
 - Exemplo: `alerts-cloudtrail-code-bashrc`, lembre-se de ajustar para o nome do seu bucket, pois o nome é global (único).
 - Realizar o upload do arquivo `alerts-cloudtrail-lambda.zip` contendo o código da Lambda
 
-1. **Criar manualmente o parâmetro SSM** contendo o Webhook do Slack:
+2. **Criar manualmente o parâmetro SSM** contendo o Webhook do Slack:
 
 - Nome: `/alertas/slack/webhook/alerts-aws-evasao-defesas`
 - Tipo: `SecureString`
