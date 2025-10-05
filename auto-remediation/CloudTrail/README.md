@@ -39,25 +39,12 @@ Criação de uma automação baseada em **EventBridge Rule** e **AWS Systems Man
 
 ---
 
-## :satellite: Exemplo de automação
-
-Ao detectar o evento `StopLogging`, o CloudFormation aciona o SSM Automation Document, que verifica o status do trail e executa o comando para reiniciar o logging automaticamente.
-
----
-
 ## :rocket: Como usar
 
 1. Baixe o template do CloudFormation: **cloudformation-remediation-cloudtrail.yaml**
 2. Faça o deploy via Stack (conta individual) ou Stack Set (multi-contas), preferencialmente na região Norte da Virgínia (**us-east-1**), pois o código e os ARNs estão voltados para essa região. Caso deseje adaptar para outra região, ajuste os ARNs e parâmetros conforme necessário.
 3. O monitoramento e remediação do CloudTrail será realizado automaticamente ao detectar interrupção do logging.
 4. O arquivo **ssm-runbook-cloudtrail.yaml** está presente apenas para consulta do conteúdo do runbook, não é necessário fazer deploy manual desse arquivo.
-
----
-
-## :warning: Limitações
-
-- Só mitiga eventos de interrupção detectados via CloudTrail;
-- Não atua retroativamente em logs já perdidos ou interrupções anteriores não detectadas;
 
 ---
 
