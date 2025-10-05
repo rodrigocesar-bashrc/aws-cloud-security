@@ -13,7 +13,7 @@ O CloudTrail é responsável por registrar todas as ações realizadas nas conta
 
 ---
 
-## ⚙️ Solução
+## ⚙️ Arquitetura
 
 Criação de uma automação baseada em **EventBridge Rule** e **AWS Systems Manager Automation**:
 
