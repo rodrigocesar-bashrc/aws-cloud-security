@@ -32,6 +32,7 @@ O deploy via CloudFormation cria automaticamente:
 
 Antes do deploy, siga os passos abaixo:
 
+<!-- markdownlint-disable MD029 -->
 1. **Criar manualmente o bucket S3**
 
 - Exemplo: `alerts-cloudtrail-code-bashrc`, lembre-se de ajustar para o nome do seu bucket, pois o nome é global (único).
