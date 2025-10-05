@@ -24,7 +24,8 @@ O deploy via CloudFormation cria automaticamente:
 - Tópico SNS para notificações por e-mail
 - Permissões necessárias (IAM Role, Bucket Policy, etc)
 
-<img width="1474" height="680" alt="image" src="https://github.com/user-attachments/assets/95fc6314-6a7b-4ec0-bec3-a93dd75aca72" />
+<!-- <img width="1474" height="680" alt="image" src="https://github.com/user-attachments/assets/95fc6314-6a7b-4ec0-bec3-a93dd75aca72" /> -->
+![image](https://github.com/user-attachments/assets/95fc6314-6a7b-4ec0-bec3-a93dd75aca72)
 
 ---
 
@@ -32,12 +33,12 @@ O deploy via CloudFormation cria automaticamente:
 
 Antes do deploy, siga os passos abaixo:
 
-1. **Criar manualmente o bucket S3** 
+1. **Criar manualmente o bucket S3**
 
 - Exemplo: `alerts-cloudtrail-code-bashrc`, lembre-se de ajustar para o nome do seu bucket, pois o nome é global (único).
 - Realizar o upload do arquivo `alerts-cloudtrail-lambda.zip` contendo o código da Lambda
 
-2. **Criar manualmente o parâmetro SSM** contendo o Webhook do Slack:
+1. **Criar manualmente o parâmetro SSM** contendo o Webhook do Slack:
 
 - Nome: `/alertas/slack/webhook/alerts-aws-evasao-defesas`
 - Tipo: `SecureString`
