@@ -24,7 +24,6 @@ O deploy via CloudFormation cria automaticamente:
 - Tópico SNS para notificações por e-mail
 - Permissões necessárias (IAM Role, Bucket Policy, etc)
 
-<!-- <img width="1474" height="680" alt="image" src="https://github.com/user-attachments/assets/95fc6314-6a7b-4ec0-bec3-a93dd75aca72" /> -->
 ![image](https://github.com/user-attachments/assets/95fc6314-6a7b-4ec0-bec3-a93dd75aca72)
 
 ---
