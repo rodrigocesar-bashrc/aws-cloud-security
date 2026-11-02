@@ -14,10 +14,7 @@ A política é baseada no exemplo oficial da AWS: [Deny access to AWS based on t
 
 ## Finalidade
 
-Reduzir a superfície de ataque da organização: região que ninguém usa é exatamente onde um atacante sobe recursos sem ser notado. Esse tipo de abuso está associado às técnicas MITRE ATT&CK:
-
-- [T1535 – Unused/Unsupported Cloud Regions](https://attack.mitre.org/techniques/T1535/)
-- [T1496 – Resource Hijacking](https://attack.mitre.org/techniques/T1496/) (ex.: mineração de criptomoeda)
+Reduzir a superfície de ataque da organização: região que ninguém usa é exatamente onde um atacante sobe recursos sem ser notado. Esse tipo de abuso está mapeado no MITRE ATT&CK como [T1535 – Unused/Unsupported Cloud Regions](https://attack.mitre.org/techniques/T1535/).
 
 Essa proteção é fundamental para:
 
@@ -32,9 +29,9 @@ Essa proteção é fundamental para:
 
 A política isenta uma role privilegiada, para administração e break-glass:
 
-- Role `OrganizationAccountAccessRole`, usada pela Management account para administrar as contas membro (exemplo de laboratório)
+- Role privilegiada `[PRIVILEGED_ROLE]` na conta `${Account}`, usada para administração e break-glass
 
-Essa exceção é definida via `Condition` com `ArnNotLike`, no bloco `Deny`. Em produção, prefira uma role de break-glass dedicada e monitorada, em vez de uma role usada no dia a dia.
+Essa exceção é definida via `Condition` com `ArnNotLike`, no bloco `Deny`. Substitua `${Account}` e `[PRIVILEGED_ROLE]` pelos valores do seu ambiente antes de aplicar a policy. Em produção, prefira uma role de break-glass dedicada e monitorada, em vez de uma role usada no dia a dia.
 
 ---
 

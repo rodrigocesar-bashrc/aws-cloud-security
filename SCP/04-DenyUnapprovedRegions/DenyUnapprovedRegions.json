@@ -57,7 +57,7 @@
           ]
         },
         "ArnNotLike": {
-          "aws:PrincipalARN": "arn:aws:iam::*:role/OrganizationAccountAccessRole"
+          "aws:PrincipalARN": "arn:aws:iam::${Account}:role/[PRIVILEGED_ROLE]"
         }
       }
     }
