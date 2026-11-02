@@ -48,7 +48,7 @@ Essa exceção é definida via `Condition` com `ArnNotLike`, no bloco `Deny`. Su
 
 Para uma explicação detalhada da motivação, estrutura e aplicação da política, leia:
 
-**[Série AWS SCP #04: Restringindo o uso de regiões na AWS Organizations](https://medium.com/@rodrigocesar.bashrc)**  
+**[Série AWS SCP #04: Restringindo o uso de regiões na AWS Organizations](https://medium.com/@rodrigocesar.bashrc/s%C3%A9rie-aws-scp-04-restringindo-o-uso-de-regi%C3%B5es-na-aws-organizations-61e2d22e8d82)**  
 Autor: Rodrigo Cesar
 
 ---
